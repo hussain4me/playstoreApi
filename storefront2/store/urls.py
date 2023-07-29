@@ -5,5 +5,6 @@ from . import views
 # URLConfig
 
 urlpatterns = [
-    path('hello/', views.say_hello)
+    path('products/', views.product_list),
+    path('product_detail/<int:pk>', views.product_detail),
 ]
