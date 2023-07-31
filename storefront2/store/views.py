@@ -18,19 +18,13 @@ class ProductList(ListCreateAPIView):
     def get_queryset(self):
         return  Product.objects.select_related('collection').all()
         serializer = ProductSerializer(queryset, many=True,context={'request': request})
-
-    def get(self, request):
-        queryset = Product.objects.all()
-        serializer = ProductSerializer(queryset, many=True,context={'request': request})
-        return Response(serializer.data)
     
-    def post(self, request):
-        serializer = ProductSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        print(serializer.validated_data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
+    def get_serializer_class(self):
+        return ProductSerializer 
+    
+    def get_serializer_context(self):
+        return {'request': self.request}
+    
 class ProductDetail(APIView):
 
     def get(self, request, pk):
