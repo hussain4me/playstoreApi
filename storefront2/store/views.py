@@ -25,6 +25,7 @@ class ProductList(ListCreateAPIView):
     def get_serializer_context(self):
         return {'request': self.request}
     
+
 class ProductDetail(APIView):
 
     def get(self, request, pk):
@@ -45,6 +46,15 @@ class ProductDetail(APIView):
             return Response({'error':'product cannot be deleted because it is associated with order item'}, status = status.HTTP_405_METHOD_NOT_ALLOWED)
         product.delete()
         return Response(status = status.HTTP_204_NO_CONTENT)
+    
+
+class CollectionList(ListCreateAPIView):
+
+    def get_queryset(self):
+        return Collection.objects.annotate(products_count = Count('featured_product')).all()
+    
+    def get_serializer_class(self):
+        return CollectionSerializer
     
 
 #  ----------------- Class based Api view with APIView Module ----------------
@@ -84,6 +94,11 @@ class ProductDetail(APIView):
 #             return Response({'error':'product cannot be deleted because it is associated with order item'}, status = status.HTTP_405_METHOD_NOT_ALLOWED)
 #         product.delete()
 #         return Response(status = status.HTTP_204_NO_CONTENT)
+
+
+# class CollectionList(APIView):
+
+#     pass
 
 
 # ---- Function based api view
