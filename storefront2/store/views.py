@@ -96,4 +96,13 @@ def collection_list(request):
     
 @api_view(['GET', 'PUT', 'DELETE'])
 def collection_detail(request, pk):
-    collection = get_object_or_404(Collection, pk=pk)
+    collection = get_object_or_404(Collection.objects.annotate(products_count = Count('products')), pk=pk)
+
+    if request.method == 'GET':
+        serializer = CollectionSerializer(collection)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    elif request.method == 'PUT':
+        serializer = CollectionSerializer(collection, data=request.data)
+        serializer.is_valid(raise_exceptions=True)
+        serializer.save()
+        return Response(serializer.data,status=status.HTTP_200_OK)
