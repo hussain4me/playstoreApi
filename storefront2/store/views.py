@@ -4,58 +4,97 @@ from django.db.models import Count
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.generics import ListCreateAPIView
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.viewsets import ModelViewSet
 # from rest_framework.mixins import ListModelMixin,CreateModelMixin
 from rest_framework.views import APIView
-from .models import Product, Collection
+from .models import Product, Collection,OrderItem
 from .serializers import ProductSerializer, CollectionSerializer
 
 # Create your views here.
 
-# ------------------- Class based api view using ListCreateApiView --------------------------------
-class ProductList(ListCreateAPIView):
 
-    def get_queryset(self):
-        return  Product.objects.select_related('collection').all()
-        serializer = ProductSerializer(queryset, many=True,context={'request': request})
-    
-    def get_serializer_class(self):
-        return ProductSerializer 
-    
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+
     def get_serializer_context(self):
         return {'request': self.request}
     
 
-class ProductDetail(APIView):
-
-    def get(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        serializer = ProductSerializer(product)
-        return Response(serializer.data)
-    
-    def put(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        serializer = ProductSerializer(product, data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data)
-    
-    def delete(self, request, pk):
-        product = get_object_or_404(Product, pk=pk)
-        if product.orderitem_set.count() > 0:
+    def destroy(self, request, *args, **kwargs):
+          if OrderItem.objects.filter(product_id = kwargs['pk']).count() > 0:
             return Response({'error':'product cannot be deleted because it is associated with order item'}, status = status.HTTP_405_METHOD_NOT_ALLOWED)
-        product.delete()
-        return Response(status = status.HTTP_204_NO_CONTENT)
+          
+          return super().destroy(request, *args, **kwargs)
+
     
 
-class CollectionList(ListCreateAPIView):
+class CollectionViewSet(ModelViewSet):
 
-    def get_queryset(self):
-        return Collection.objects.annotate(products_count = Count('featured_product')).all()
+    queryset = Collection.objects.annotate(products_count = Count('featured_product')).all()
+    serializer_class = CollectionSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        collection = get_object_or_404(Collection, pk=pk)
+        if collection.products.count() > 0:
+            return Response({'error': 'Collection cannot be deleted'})
+        return super().destroy(request, *args, **kwargs)
+
+   
+
+
+
     
-    def get_serializer_class(self):
-        return CollectionSerializer
+
+
+# ------------------- Class based api view using ListCreateApiView --------------------------------
+# class ProductList(ListCreateAPIView):
+
+#     def get_queryset(self):
+#         return  Product.objects.all()
+#         serializer = ProductSerializer(queryset, many=True,context={'request': request})
     
+#     def get_serializer_class(self):
+#         return ProductSerializer 
+    
+#     def get_serializer_context(self):
+#         return {'request': self.request}
+    
+
+# class ProductDetail(RetrieveUpdateDestroyAPIView):
+#     queryset = Product.objects.all()
+
+#     serializer_class = ProductSerializer
+        
+#     def delete(self, request, pk):
+#         product = get_object_or_404(Product, pk=pk)
+#         if product.orderitem_set.count() > 0:
+#             return Response({'error':'product cannot be deleted because it is associated with order item'}, status = status.HTTP_405_METHOD_NOT_ALLOWED)
+#         product.delete()
+#         return Response(status = status.HTTP_204_NO_CONTENT)
+    
+
+# class CollectionList(ListCreateAPIView):
+
+#     def get_queryset(self):
+#         return Collection.objects.annotate(products_count = Count('featured_product')).all()
+    
+#     def get_serializer_class(self):
+#         return CollectionSerializer
+    
+
+# class CollectionDetail(RetrieveUpdateDestroyAPIView):
+#     pass
+#     queryset = Collection.objects.annotate(products_count = Count('product'))
+#     serializer_class = CollectionSerializer
+
+#     def delete(self, request,pk):
+#         collection = get_object_or_404(Collection, pk=pk)
+#         if collection.products.count() > 0:
+#             return Response({'error': 'Collection cannot be deleted'})
+#         collection.delete()
+#         return super().delete(status=status.HTTP_204_NO_CONTENT) 
 
 #  ----------------- Class based Api view with APIView Module ----------------
     
