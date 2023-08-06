@@ -23,8 +23,8 @@ cart_router.register('items', views.CartItemViewSet, basename = 'cart-item' )
 # pprint(router.urls)
 # pprint(products_router.urls)
 
-urlpatterns = router.urls + products_router.urls
-urlpatterns = router.urls + cart_router.urls
+urlpatterns = router.urls + products_router.urls + cart_router.urls
+# urlpatterns = router.urls + cart_router.urls
 
 # urlpatterns = [
     # path('products/', views.ProductList.as_view()),
