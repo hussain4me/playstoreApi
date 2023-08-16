@@ -163,12 +163,13 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
        
     ),
+    # 'DEFAULT_PERMISSION_CLASSES' :[
+    #     'rest_framework.permissions.IsAuthenticated',
+    # ]
 
 }
 
-SIMPLE_JWT = {
-   'AUTH_HEADER_TYPES': ('JWT',),
-}
+
 
 
 AUTH_USER_MODEL = 'core.user'
@@ -177,10 +178,12 @@ AUTH_USER_MODEL = 'core.user'
 DJOSER  = {
     'SERIALIZERS' : {
         'user_create': 'core.serializers.UserCreateSerializer',
+        'current_user': 'core.serializers.UserSerializer',
     }
     
 }
 
 SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('JWT',),
     'ACCESS_TOKEN_LIFETIME' : timedelta(days=1)
 }

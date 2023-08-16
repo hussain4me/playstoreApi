@@ -2,12 +2,15 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter,OrderingFilter
 from rest_framework import status
 from rest_framework.mixins import CreateModelMixin,DestroyModelMixin,UpdateModelMixin,RetrieveModelMixin, ListModelMixin
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .permissions import IsAdminOrReadOnly
 from .pagination import DefaultPagination
 from .models import Product, Collection,OrderItem,Review,Cart,CartItem, Customer
 from .serializers import ProductSerializer, CollectionSerializer, ReviewSerializer,CartSerializer,CartItemSerializer,AddCartItemSerializer,UpdateCartItemSerializer, CustomerSerializer
@@ -20,6 +23,7 @@ class ProductViewSet(ModelViewSet):
     serializer_class = ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     pagination_class = DefaultPagination
+    permission_classes = [IsAdminOrReadOnly]
     filterset_fileds = ['collection_id']
     search_fields = ['title', 'description']
     ordering_fields = ['unit-price', 'last_updated']
@@ -47,6 +51,7 @@ class CollectionViewSet(ModelViewSet):
 
     queryset = Collection.objects.annotate(products_count = Count('featured_product')).all()
     serializer_class = CollectionSerializer
+    permission_classes = [IsAdminOrReadOnly]
 
     def destroy(self, request, *args, **kwargs):
         collection = get_object_or_404(Collection, pk=pk)
@@ -90,6 +95,25 @@ class CartItemViewSet(ModelViewSet):
 class CustomerViewSet(CreateModelMixin, RetrieveModelMixin,UpdateModelMixin, GenericViewSet):
     queryset =  Customer.objects.all()
     serializer_class = CustomerSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        
+        return [IsAuthenticated()]
+    
+    @action(detail=False, methods=['GET','PUT'])
+    def me(self, request):
+        (customer, created) = Customer.objects.get_or_create(user_id=request.user.id)
+        if request.method == 'GET':
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+        elif request.method == 'PUT':
+            serializer =  CustomerSerializer(customer, data=request.data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
 
     
 
