@@ -92,10 +92,11 @@ class CartItemViewSet(ModelViewSet):
        return {'cart_id': self.kwargs['cart_pk']}
    
 
-class CustomerViewSet(CreateModelMixin, RetrieveModelMixin,UpdateModelMixin, GenericViewSet):
+# class CustomerViewSet(CreateModelMixin, RetrieveModelMixin,UpdateModelMixin, GenericViewSet):
+class CustomerViewSet(ModelViewSet):
     queryset =  Customer.objects.all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_permissions(self):
         if self.request.method == 'GET':
